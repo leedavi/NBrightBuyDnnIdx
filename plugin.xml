@@ -44,8 +44,8 @@
 				</active>
 			</checkbox>
 			<dropdownlist>
-				<providertype selectedtext="UI_x0020_Only">
-					<![CDATA[01]]>
+				<providertype selectedtext="Planificateur">
+					<![CDATA[05]]>
 				</providertype>
 			</dropdownlist>
 			<checkboxlist />
