@@ -9,7 +9,8 @@ Installation
 ------------
 
 - Install the NBrightBuyDnnIdx_*.*.*_Install.zip as a normal DNN module, through the DNN extension.
-- Go into the NBS Back Office>Admin>Plugins. Edit and activate the "IBF Index DNN Search" plugin listed.
+- Go into the NBS Back Office>Admin>Plugins. Edit and activate the "Index DNN Search" plugin listed.
+- Make sure the "Index DNN Search" plugin has a "Provider Type" of scheduler.
 - Ensure the NBS scheuler is running on the DNN scheudler. http://nbsdocs.nbrightproject.org/Documentation/Integratorguide/Setup.aspx
 
 Operation
