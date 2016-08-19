@@ -105,7 +105,7 @@ namespace Nevoweb.DNN.NBrightBuy.Providers
                 var strContent = "";
                 // select all products
                 var objCtrl = new NBrightBuyController();
-                var strFilter = " and NB1.ModifiedDate > convert(datetime,'" + lastrun.ToString("s") + "' ";
+                var strFilter = " and NB1.ModifiedDate > convert(datetime,'" + lastrun.ToString("s") + "') ";
                 if (debug) strFilter = "";
                 var l = objCtrl.GetList(portal.PortalID, -1, "PRD", strFilter);
 
