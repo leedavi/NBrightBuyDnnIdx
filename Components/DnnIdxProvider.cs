@@ -33,53 +33,47 @@ namespace Nevoweb.DNN.NBrightBuy.Providers
         /// </summary>
         /// <param name="portalfinfo"></param>
         /// <returns></returns>
-        public override string DoWork()
+        public override string DoWork(int portalId)
         {
 
             try
             {
                 var objCtrl = new NBrightBuyController();
 
-                // the sceduler runs at host level, we therefore need to loop through ALL portals to process data at a portal level.
-                var portalList = NBrightDNN.DnnUtils.GetAllPortals();
-                foreach (var portal in portalList)
+                // check if we have NBS in this portal by looking for default settings.
+                var nbssetting = objCtrl.GetByGuidKey(portalId, -1, "SETTINGS", "NBrightBuySettings");
+                if (nbssetting != null)
                 {
-                    // check if we have NBS in this portal by looking for default settings.
-                    var nbssetting = objCtrl.GetByGuidKey(portal.PortalID, -1, "SETTINGS", "NBrightBuySettings");
-                    if (nbssetting != null)
+                    var storeSettings = new StoreSettings(portalId);
+                    var pluginData = new PluginData(portalId); // get plugin data to see if this scheduler is active on this portal 
+                    var plugin = pluginData.GetPluginByCtrl("dnnsearchindex");
+                    if (plugin != null && plugin.GetXmlPropertyBool("genxml/checkbox/active"))
                     {
-                        var storeSettings = new StoreSettings(portal.PortalID);
-                        var pluginData = new PluginData(portal.PortalID); // get plugin data to see if this scheduler is active on this portal 
-                        var plugin = pluginData.GetPluginByCtrl("dnnsearchindex");
-                        if (plugin != null && plugin.GetXmlPropertyBool("genxml/checkbox/active"))
+                        // The NBS scheduler is normally set to run hourly, therefore if we only want a process to run daily we need the logic this function.
+                        // To to this we keep a last run flag on the sceduler settings
+                        var setting = objCtrl.GetByGuidKey(portalId, -1, "DNNIDXSCHEDULER", "DNNIDXSCHEDULER");
+                        if (setting == null)
                         {
-                            // The NBS scheduler is normally set to run hourly, therefore if we only want a process to run daily we need the logic this function.
-                            // To to this we keep a last run flag on the sceduler settings
-                            var setting = objCtrl.GetByGuidKey(portal.PortalID, -1, "DNNIDXSCHEDULER", "DNNIDXSCHEDULER");
-                            if (setting == null)
-                            {
-                                setting = new NBrightInfo(true);
-                                setting.ItemID = -1;
-                                setting.PortalId = portal.PortalID;
-                                setting.TypeCode = "DNNIDXSCHEDULER";
-                                setting.GUIDKey = "DNNIDXSCHEDULER";
-                                setting.ModuleId = -1;
-                                setting.XMLData = "<genxml></genxml>";
-                            }
-
-
-                            var lastrun = setting.GetXmlPropertyRaw("genxml/lastrun");
-                            var lastrundate = DateTime.Now.AddYears(-99);
-                            if (Utils.IsDate(lastrun)) lastrundate = Convert.ToDateTime(lastrun);
-
-                            var rtnmsg = DoProductIdx(portal, lastrundate, storeSettings.DebugMode);
-                            setting.SetXmlProperty("genxml/lastrun", DateTime.Now.ToString("s"), TypeCode.DateTime);
-                            objCtrl.Update(setting);
-                            if (rtnmsg != "") return rtnmsg;
-
+                            setting = new NBrightInfo(true);
+                            setting.ItemID = -1;
+                            setting.PortalId = portalId;
+                            setting.TypeCode = "DNNIDXSCHEDULER";
+                            setting.GUIDKey = "DNNIDXSCHEDULER";
+                            setting.ModuleId = -1;
+                            setting.XMLData = "<genxml></genxml>";
                         }
-                    }
 
+
+                        var lastrun = setting.GetXmlPropertyRaw("genxml/lastrun");
+                        var lastrundate = DateTime.Now.AddYears(-99);
+                        if (Utils.IsDate(lastrun)) lastrundate = Convert.ToDateTime(lastrun);
+
+                        var rtnmsg = DoProductIdx(portalId, lastrundate, storeSettings.DebugMode);
+                        setting.SetXmlProperty("genxml/lastrun", DateTime.Now.ToString("s"), TypeCode.DateTime);
+                        objCtrl.Update(setting);
+                        if (rtnmsg != "") return rtnmsg;
+
+                    }
                 }
 
                 return " - NBS-DNNIDX scheduler OK ";
@@ -111,7 +105,7 @@ namespace Nevoweb.DNN.NBrightBuy.Providers
 
                 foreach (var p in l)
                 {
-                    var prodData = new ProductData(p.ItemID, lang);
+                    var prodData = new ProductData(p.ItemID, portalId, lang);
 
                     strContent = prodData.Info.GetXmlProperty("genxml/textbox/txtproductref") + " : " + prodData.SEODescription + " " + prodData.SEOName + " " + prodData.SEOTagwords + " " + prodData.SEOTitle;
 
